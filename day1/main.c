@@ -3,12 +3,12 @@
 #include <ctype.h>
 #include <string.h>
 
-int main() {
-    FILE* file = fopen("input.txt", "r");
+int task1() {
+    FILE* file = fopen("input_1.txt", "r");
 
     if (!file) {
         printf("Error opening file\n");
-        return -1;
+        exit(1);
     }
 
     char line[100];
@@ -36,7 +36,12 @@ int main() {
     }
 
     fclose(file);
-    printf("Sum: %d\n", sum);
 
+    return sum;
+}
+
+int main() {
+    int sum = task1();
+    printf("[Task1] Sum %d\n", sum);
     return 0;
 }
