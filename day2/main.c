@@ -132,7 +132,7 @@ int task2(FILE* input) {
 }
 
 int main() {
-    FILE* input = read_input("../input.txt");
+    FILE* input = read_input("input.txt");
 
     int result1 = task1(input);
     printf("[task1] %d\n", result1);
