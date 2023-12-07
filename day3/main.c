@@ -6,7 +6,7 @@
 
 #define MORE_LINES 1024
 #define MORE_CHARS 1024
-
+#define MORE_GEARS 1000
 
 typedef struct {
     char **data;
@@ -77,8 +77,11 @@ Input read_input(char* filename) {
 }
 
 bool is_symbol(char sym) {
-//    return sym == '*';
     return !isdigit(sym) && sym != '.' && sym != '\n';
+}
+
+bool is_gear(char sym) {
+    return sym == '*';
 }
 
 bool find_adjacent_symbol(int digit_len, int pos, char* prev_line, char *line, char *next_line) {
@@ -130,8 +133,22 @@ bool find_adjacent_symbol(int digit_len, int pos, char* prev_line, char *line, c
     return false;
 }
 
-int task1(Input *input) {
+typedef struct {
+    int y;
+    int x;
+} Gear;
 
+int add_gear(int y, int x, Gear *gears, int total) {
+    Gear gear = {.y = y, .x = x};
+    gears[total++] = gear;
+    if (total % MORE_GEARS == 0) {
+        gears = realloc(gears, sizeof(Gear) * (total + MORE_GEARS));
+    }
+
+    return total;
+}
+
+int task1(Input *input) {
     int sum = 0;
 
     for (int l = 0; l < input->lines; l++) {
@@ -172,14 +189,99 @@ int task1(Input *input) {
     return sum;
 }
 
+int task2(Input *input) {
+    int sum = 0;
+
+    // matrix 140x140 (y*x)
+    int numbers[140][140] = {0};
+    Gear *gears = malloc(sizeof(Gear) * MORE_GEARS);
+    int gears_total = 0;
+
+    for (int y = 0; y < input->lines; y++) {
+        char *line = input->data[y];
+
+        int digit_len = 0;
+        char digit_chars[5];
+        memset(digit_chars, 0, sizeof(digit_chars));
+
+        for (int x = 0; x < strlen(line); x++) {
+            char c = line[x];
+            if (is_gear(c)) {
+                gears_total = add_gear(y, x, gears, gears_total);
+            }
+
+            if (isdigit(c)) {
+                digit_chars[digit_len] = c;
+                digit_len += 1;
+            } else if (digit_len > 0) {
+                int start = x - digit_len;
+                int end = x;
+                int num = atoi(digit_chars);
+
+                // set pointer to number for all pos number occupies
+                for (int xx = start; xx < end; xx++) {
+                    numbers[y][xx] = num;
+                }
+
+                memset(digit_chars, 0, sizeof(digit_chars));
+                digit_len = 0;
+            }
+        }
+    }
+
+    for (int i = 0; i < gears_total; i++) {
+        Gear gear = gears[i];
+        int adjacent[8] = {0};
+        int adjacent_found = 0;
+
+        // left
+        int num = numbers[gear.y][gear.x - 1];
+        if (num != 0) {
+            adjacent[adjacent_found++] = num;
+        }
+        // right
+        num = numbers[gear.y][gear.x + 1];
+
+        if (num != 0) {
+            adjacent[adjacent_found++] = num;
+        }
+
+        // top
+        for (int x = gear.x - 1; x <= gear.x + 1; x++) {
+            num = numbers[gear.y - 1][x];
+            if (num != 0 && adjacent[adjacent_found - 1] != num) {
+                adjacent[adjacent_found++] = num;
+            }
+        }
+
+        // bottom
+        for (int x = gear.x - 1; x <= gear.x + 1; x++) {
+            num = numbers[gear.y + 1][x];
+            if (num != 0 && adjacent[adjacent_found - 1] != num) {
+                adjacent[adjacent_found++] = num;
+            }
+        }
+
+        if (adjacent_found == 2) {
+            sum += adjacent[0] * adjacent[1];
+            adjacent[0] = 0;
+            adjacent[1] = 0;
+        }
+    }
+
+    free(gears);
+
+    return sum;
+}
+
 int main() {
     Input input = read_input("input.txt");
 
     int result1 = task1(&input);
     printf("[task1] %d\n", result1);
 
-    // int result2 = task2(input);
-    // printf("[task2] %d\n", result2);
+    int result2 = task2(&input);
+    printf("[task2] %d\n", result2);
 
     for (int i = 0; i < input.lines; i++) {
         free(input.data[i]);
