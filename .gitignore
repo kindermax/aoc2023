@@ -2,5 +2,6 @@
 *.a
 main
 cmake-build-debug
+build
 .idea
 .DS_Store
